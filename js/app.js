@@ -1,6 +1,6 @@
-var app = function () {
-    'use strict';
+'use strict';
 
+var app = function () {
     function event(sender) {
         this._sender = sender;
         this._listeners = [];
@@ -19,7 +19,7 @@ var app = function () {
         }
     };
 
-    function data(name, resource, parm_id, parm_value, type) {
+    function vehicles_model(name, resource, parm_id, parm_value, type) {
         this._name = name;
         this._resource = resource;
         this._url = '/' + resource;
@@ -97,11 +97,9 @@ var app = function () {
         this.add_onupdate = function (onupdate_callback) {
             this._onupdate.push(onupdate_callback);
         }
-
-        //this.update();
     }
 
-    function data_view() {
+    function vehicles_view() {
         this.create_select_element = function (resource) {
             let element_div = $('<div/>');
             element_div.attr('id', resource + '_filter');
@@ -163,7 +161,7 @@ var app = function () {
         }
     }
 
-    const view = new data_view();
+    const view = new vehicles_view();
     const storage = {};
 
     storage.config = { url: 'https://config-api.winner.ua/api', key: 'B84279CE-DFEE-4351-B446-870C9A1CA905' };
@@ -171,27 +169,27 @@ var app = function () {
     var defers = [];
 
     storage.filters = {};
-    storage.filters.brands = new data('Бренд', 'brands', 'brand_id', 'brand');
+    storage.filters.brands = new vehicles_model('Бренд', 'brands', 'brand_id', 'brand');
     storage.filters.brands._element = view.create_select_element(storage.filters.brands._resource);
     storage.filters.brands.add_onupdate(view.element_select_update)
     defers.push(storage.filters.brands.update());
 
-    storage.filters.models = new data('Модель', 'models', 'model', 'model');
+    storage.filters.models = new vehicles_model('Модель', 'models', 'model', 'model');
     storage.filters.models._element = view.create_select_element(storage.filters.models._resource);
     storage.filters.models.add_onupdate(view.element_select_update)
     defers.push(storage.filters.models.update());
 
-    storage.filters.fuel = new data('Тип палива', 'fuel', 'fuel', 'name');
+    storage.filters.fuel = new vehicles_model('Тип палива', 'fuel', 'fuel', 'name');
     storage.filters.fuel._element = view.create_select_element(storage.filters.fuel._resource);
     storage.filters.fuel.add_onupdate(view.element_select_update)
     defers.push(storage.filters.fuel.update());
 
-    storage.filters.gears_types = new data('Коробка передач', 'gears_types', 'gear_type_id', 'gear_type');
+    storage.filters.gears_types = new vehicles_model('Коробка передач', 'gears_types', 'gear_type_id', 'gear_type');
     storage.filters.gears_types._element = view.create_select_element(storage.filters.gears_types._resource);
     storage.filters.gears_types.add_onupdate(view.element_select_update)
     defers.push(storage.filters.gears_types.update());
 
-    storage.filters.chasis = new data('Тип кузова', 'chasis', 'chasis', 'chasis');
+    storage.filters.chasis = new vehicles_model('Тип кузова', 'chasis', 'chasis', 'chasis');
     storage.filters.chasis._element = view.create_select_element(storage.filters.chasis._resource);
     storage.filters.chasis.add_onupdate(view.element_select_update)
     defers.push(storage.filters.chasis.update());
@@ -216,7 +214,7 @@ var app = function () {
         brands.push(...storage.filters.brands._data);
         gears_types.push(...storage.filters.gears_types._data);
 
-        storage.vehicles_group = new data('Авто', 'vehicles_group', 'id', 'model');
+        storage.vehicles_group = new vehicles_model('Авто', 'vehicles_group', 'id', 'model');
         storage.vehicles_group.add_onupdate(view.put_to_page)
         storage.vehicles_group.add_linked_filter(storage.filters.brands);
         storage.vehicles_group.add_linked_filter(storage.filters.models);
