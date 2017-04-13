@@ -1,0 +1,44 @@
+body {
+    background: #ebeff2;
+}
+
+.car_box {
+    display: inline-block;
+    width: 19.4%;
+    padding-left: .3%;
+    padding-right: .3%;
+    min-width: 14rem;
+}
+
+.car_card {
+    background: #fff;
+    border-radius: 5px;
+    width: 100%;
+}
+
+.car_card>div {
+    margin: 0.3rem;
+}
+
+.filter {
+    display: inline-block;
+    width: 96%;
+    margin-left: 2%;
+    margin-right: 2%;
+    background: #fff;
+    margin-bottom: 20px;
+}
+
+.filter-element {
+    float: left;
+    width: 19%;
+    padding-left: .9%;
+    margin-top: 1%;
+    margin-bottom: 1%;
+}
+
+#car_data {
+    width: 96%;
+    margin-left: 2%;
+    margin-right: 2%;
+}
