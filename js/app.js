@@ -19,13 +19,31 @@ var app = function () {
         }
     };
 
-    function vehicles_model(name, resource, parm_id, parm_value, type) {
+    String.prototype.formatUnicorn = String.prototype.formatUnicorn ||
+        function () {
+            "use strict";
+            var str = this.toString();
+            if (arguments.length) {
+                var t = typeof arguments[0];
+                var key;
+                var args = ("string" === t || "number" === t) ?
+                    Array.prototype.slice.call(arguments)
+                    : arguments[0];
+
+                for (key in args) {
+                    str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), args[key]);
+                }
+            }
+
+            return str;
+        };
+
+    function vehicles_model(name, resource, parm_id, parm_value) {
         this._name = name;
         this._resource = resource;
         this._url = '/' + resource;
         this._parm_id = parm_id;
-        this._parm_value = parm_value;
-        this._type = type;
+        this._parm_value = parm_value;        
 
         this._data = [];
         this._element = undefined;
@@ -148,9 +166,14 @@ var app = function () {
                 $('<div/>', { text: 'Brand: ' + item.brand }).appendTo(pdiv);
                 $('<div/>', { text: 'Model: ' + item.model }).appendTo(pdiv);
                 $('<div/>', { text: 'Year: ' + item.year }).appendTo(pdiv);
-                $('<div/>', { text: 'Gear: ' + item.gear_id }).appendTo(pdiv);
-                $('<div/>', { text: 'Displacement: ' + item.displacement }).appendTo(pdiv);
+                let gear = gears.find(x => x.gear_id === item.gear_id) || { gear_name: '' }
+                $('<div/>', { text: 'Gear: ' + gear.gear_name }).appendTo(pdiv);
+                let engine_vol = parseFloat(Math.round(item.displacement * 100) / 100).toFixed(1);
+                let engine_power = parseInt(item.power);
+                let engine = '{0} л. ({1} к.с.)'.formatUnicorn(engine_vol, engine_power);
+                $('<div/>', { text: 'Displacement: ' + engine }).appendTo(pdiv);
                 $('<div/>', { text: 'Chasis: ' + item.chasis }).appendTo(pdiv);
+                $('<div/>', { text: 'Version: ' + item.version }).appendTo(pdiv);
                 let fuel = fuels.find(x => x.fuel === item.fuel) || { name: '' }
                 $('<div/>', { text: 'Fuel: ' + fuel.name }).appendTo(pdiv);
                 let price = item.price || 0;
@@ -168,7 +191,8 @@ var app = function () {
 
     var defers = [];
 
-    storage.filters = {};
+    storage.filters = {};    
+
     storage.filters.brands = new vehicles_model('Бренд', 'brands', 'brand_id', 'brand');
     storage.filters.brands._element = view.create_select_element(storage.filters.brands._resource);
     storage.filters.brands.add_onupdate(view.element_select_update)
@@ -194,7 +218,12 @@ var app = function () {
     storage.filters.chasis.add_onupdate(view.element_select_update)
     defers.push(storage.filters.chasis.update());
 
+    storage.filters.gears = new vehicles_model('Коробка передач', 'gears', 'gear_id', 'gear_name');
+    defers.push(storage.filters.gears.update());
+
     $.each(storage.filters, function (index, value) {
+        if (typeof(value._element) === "undefined")
+           return true;
         $('#filter').append(value._element);
         let filter_element = value._element.find('select');
         filter_element.chosen({ width: '98%', placeholder_text_multiple: value._name }).trigger("chosen:updated");
@@ -205,6 +234,7 @@ var app = function () {
     const fuels = [];
     const brands = [];
     const gears_types = [];
+    const gears = [];
 
     $.when(
         ...defers
@@ -213,6 +243,7 @@ var app = function () {
         fuels.push(...storage.filters.fuel._data);
         brands.push(...storage.filters.brands._data);
         gears_types.push(...storage.filters.gears_types._data);
+        gears.push(...storage.filters.gears._data);
 
         storage.vehicles_group = new vehicles_model('Авто', 'vehicles_group', 'id', 'model');
         storage.vehicles_group.add_onupdate(view.put_to_page)
