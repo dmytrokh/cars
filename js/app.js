@@ -106,7 +106,7 @@ var app = function () {
                     })(scope),
                     error: (function (scope) {
                         return function (xhr, status, errordata) {
-                            request_error(xhr, status, error, scope)
+                            request_error(xhr, status, errordata, scope)
                         }
                     })(scope),
                     beforeSend: set_headers
@@ -207,7 +207,7 @@ var app = function () {
                 }
                 else return 0
             });
-            
+
             element.chosen().trigger("chosen:updated");
         }
 
