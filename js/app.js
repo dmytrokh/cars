@@ -43,7 +43,7 @@ var app = function () {
         this._resource = resource;
         this._url = '/' + resource;
         this._parm_id = parm_id;
-        this._parm_value = parm_value;        
+        this._parm_value = parm_value;
 
         this._data = [];
         this._element = undefined;
@@ -52,6 +52,10 @@ var app = function () {
         this._linked_filters = [];
 
         this._onupdate = [];
+
+        this._parm_group_id = "";
+        this._parm_group_value = "";
+        this._group_data = [];
 
         var request_error = function (xhr, status, error, scope) {
             scope._error_text = status;
@@ -83,7 +87,7 @@ var app = function () {
         }
 
         this.update = (function (scope) {
-            return function (success_callback) {
+            return function () {
                 let full_url = storage.config.url + scope._url;
 
                 function set_headers(xhr) {
@@ -97,7 +101,7 @@ var app = function () {
                     dataType: 'json',
                     success: (function (scope) {
                         return function (data) {
-                            request_success(scope, data, success_callback)
+                            request_success(scope, data)
                         }
                     })(scope),
                     error: (function (scope) {
@@ -151,6 +155,62 @@ var app = function () {
             element.chosen().trigger("chosen:updated");
         }
 
+        this.element_select_optgroup_update = function (scope, data) {
+            let element = scope._element.find('select');
+
+            $.each(element.find('option'), function (index, value) {
+                let opt = data.find(x => x[scope._parm_id] === value.value);
+                if (typeof (opt) === "undefined") {
+                    value.remove();
+                } else {
+                    let idx = data.indexOf(opt);
+                    data.splice(idx, 1);
+                }
+            });
+
+            $.each(data, function (index, value) {
+                let elements_group = element.find('optgroup[id="' + value[scope._parm_group_id] + '"]');
+                let element_group;
+                if (elements_group.length === 0) {
+                    element_group = $('<optgroup/>');
+                    element_group.attr('id', value[scope._parm_group_id]);
+
+                    let label_obj = scope._group_data.find(x => x[scope._parm_group_id] === value[scope._parm_group_id])
+                    let label = value[scope._parm_group_id];
+                    if (typeof (label_obj) !== "undefined") {
+                        label = label_obj[scope._parm_group_value];
+                    }
+                    element_group.attr('label', label);
+                    element_group.appendTo(element);
+                } else {
+                    element_group = elements_group[0];
+                }
+                element_group.append(new Option(value[scope._parm_value], value[scope._parm_id]));
+            });
+
+            $.each(element.find('optgroup'), function (index, value) {
+                if ($(value).children().length === 0)
+                    value.remove();
+            });
+            
+            let group_data_idx =  scope._group_data.map(function (x) { return x[scope._parm_group_id] });
+            element.find('optgroup').sort(function (a, b) {
+                let idx_a = group_data_idx.indexOf(a.id);
+                let idx_b = group_data_idx.indexOf(b.id);
+                if (idx_a > idx_b) {
+                    b.parentNode.insertBefore(b, a);
+                    return 1;
+                }
+                else if (idx_a < idx_b) {
+                    a.parentNode.insertBefore(a, b);
+                    return -1;
+                }
+                else return 0
+            });
+            
+            element.chosen().trigger("chosen:updated");
+        }
+
         this.put_to_page = function (err, data) {
             let car_data_element = $('#car_data');
 
@@ -191,7 +251,7 @@ var app = function () {
 
     var defers = [];
 
-    storage.filters = {};    
+    storage.filters = {};
 
     storage.filters.brands = new vehicles_model('Бренд', 'brands', 'brand_id', 'brand');
     storage.filters.brands._element = view.create_select_element(storage.filters.brands._resource);
@@ -200,8 +260,6 @@ var app = function () {
 
     storage.filters.models = new vehicles_model('Модель', 'models', 'model', 'model');
     storage.filters.models._element = view.create_select_element(storage.filters.models._resource);
-    storage.filters.models.add_onupdate(view.element_select_update)
-    defers.push(storage.filters.models.update());
 
     storage.filters.fuel = new vehicles_model('Тип палива', 'fuel', 'fuel', 'name');
     storage.filters.fuel._element = view.create_select_element(storage.filters.fuel._resource);
@@ -222,14 +280,12 @@ var app = function () {
     defers.push(storage.filters.gears.update());
 
     $.each(storage.filters, function (index, value) {
-        if (typeof(value._element) === "undefined")
-           return true;
+        if (typeof (value._element) === "undefined")
+            return true;
         $('#filter').append(value._element);
         let filter_element = value._element.find('select');
         filter_element.chosen({ width: '98%', placeholder_text_multiple: value._name }).trigger("chosen:updated");
     });
-
-    storage.filters.models.add_linked_filter(storage.filters.brands);
 
     const fuels = [];
     const brands = [];
@@ -244,6 +300,14 @@ var app = function () {
         brands.push(...storage.filters.brands._data);
         gears_types.push(...storage.filters.gears_types._data);
         gears.push(...storage.filters.gears._data);
+
+        storage.filters.models._parm_group_id = 'brand_id';
+        storage.filters.models._parm_group_value = 'brand';
+        storage.filters.models._group_data.push(...brands);
+        storage.filters.models.add_onupdate(view.element_select_optgroup_update)
+        storage.filters.models.update();
+
+        storage.filters.models.add_linked_filter(storage.filters.brands);
 
         storage.vehicles_group = new vehicles_model('Авто', 'vehicles_group', 'id', 'model');
         storage.vehicles_group.add_onupdate(view.put_to_page)
