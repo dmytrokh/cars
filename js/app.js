@@ -247,7 +247,7 @@ var app = function () {
     const view = new vehicles_view();
     const storage = {};
 
-    storage.config = { url: 'https://config-api.winner.ua/api', key: 'B84279CE-DFEE-4351-B446-870C9A1CA905' };
+    storage.config = { url: 'https://morning-lake.gear.host/api', key: 'B84279CE-DFEE-4351-B446-870C9A1CA905' };
 
     var defers = [];
 
