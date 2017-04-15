@@ -247,7 +247,7 @@ var app = function () {
     const view = new vehicles_view();
     const storage = {};
 
-    storage.config = { url: 'https://morning-lake.gear.host/api', key: 'B84279CE-DFEE-4351-B446-870C9A1CA905' };
+    storage.config = { url: 'https://morning-lake.gear.host/api', key: '886C688C-7DB2-4A3C-97A9-5EE6F062DF8D' };
 
     var defers = [];
 
